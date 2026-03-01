@@ -17,26 +17,34 @@ st.set_page_config(
 )
 
 
+
+          import requests
+import os
+
 PDF_PATH = "quran.pdf"
-PROGRESS_FILE = "progress.json"
-TOTAL_PAGES = 607
-
-# ===============================
-# AUTO DOWNLOAD PDF FROM GOOGLE DRIVE
-# ===============================
-
 FILE_ID = "1UHV6e8GvwgbNm80cff0E6_skKJRN0X1a"
-PDF_URL = f"https://drive.google.com/uc?export=download&id={FILE_ID}"
 
-if not os.path.exists(PDF_PATH):
+def download_file_from_google_drive(file_id, destination):
+    URL = "https://drive.google.com/uc?export=download"
+
+    session = requests.Session()
+    response = session.get(URL, params={"id": file_id}, stream=True)
+
+    # Handle large file confirmation token
+    for key, value in response.cookies.items():
+        if key.startswith("download_warning"):
+            response = session.get(URL, params={"id": file_id, "confirm": value}, stream=True)
+            break
+
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(32768):
+            if chunk:
+                f.write(chunk)
+
+# Download if not exists
+if not os.path.exists(PDF_PATH) or os.path.getsize(PDF_PATH) < 1000000:
     with st.spinner("📥 Downloading Quran PDF... Please wait"):
-        try:
-            response = requests.get(PDF_URL)
-            response.raise_for_status()
-            with open(PDF_PATH, "wb") as f:
-                f.write(response.content)
-        except Exception as e:
-            st.error(f"❌ Failed to download Quran PDF: {e}")
+        download_file_from_google_drive(FILE_ID, PDF_PATH)
 # ===============================
 # SESSION STATE
 # ===============================
@@ -310,4 +318,5 @@ st.markdown(f"""
 progress = {"last_page": st.session_state.page}
 
 with open(PROGRESS_FILE, "w") as f:
+
     json.dump(progress, f)
