@@ -16,6 +16,8 @@ st.set_page_config(
     layout="wide"
 )
 
+TOTAL_PAGES = 607
+PROGRESS_FILE = "progress.json"
 
 PDF_PATH = "quran.pdf"
 FILE_ID = "1UHV6e8GvwgbNm80cff0E6_skKJRN0X1a"
@@ -316,4 +318,5 @@ progress = {"last_page": st.session_state.page}
 with open(PROGRESS_FILE, "w") as f:
 
     json.dump(progress, f)
+
 
