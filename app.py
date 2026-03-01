@@ -22,16 +22,19 @@ PROGRESS_FILE = "progress.json"
 PDF_PATH = "quran.pdf"
 FILE_ID = "1UHV6e8GvwgbNm80cff0E6_skKJRN0X1a"
 
-def download_file_from_google_drive(file_id, destination):
-    URL = "https://drive.google.com/uc?export=download"
+def download_large_file(file_id, destination):
+    url = f"https://drive.google.com/uc?export=download&id={file_id}"
 
     session = requests.Session()
-    response = session.get(URL, params={"id": file_id}, stream=True)
+    response = session.get(url, stream=True)
 
-    # Handle large file confirmation token
+    # Handle Google Drive confirmation token
     for key, value in response.cookies.items():
         if key.startswith("download_warning"):
-            response = session.get(URL, params={"id": file_id, "confirm": value}, stream=True)
+            response = session.get(
+                url + f"&confirm={value}",
+                stream=True
+            )
             break
 
     with open(destination, "wb") as f:
@@ -39,10 +42,12 @@ def download_file_from_google_drive(file_id, destination):
             if chunk:
                 f.write(chunk)
 
-# Download if not exists
-if not os.path.exists(PDF_PATH) or os.path.getsize(PDF_PATH) < 1000000:
-    with st.spinner("📥 Downloading Quran PDF... Please wait"):
-        download_file_from_google_drive(FILE_ID, PDF_PATH)
+# Download if file missing or corrupted
+if not os.path.exists(PDF_PATH) or os.path.getsize(PDF_PATH) < 10000000:
+    with st.spinner("📥 Loading Quran file... Please wait"):
+        download_large_file(FILE_ID, PDF_PATH)
+
+
 # ===============================
 # SESSION STATE
 # ===============================
@@ -318,5 +323,6 @@ progress = {"last_page": st.session_state.page}
 with open(PROGRESS_FILE, "w") as f:
 
     json.dump(progress, f)
+
 
 
